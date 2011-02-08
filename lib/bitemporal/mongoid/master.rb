@@ -18,7 +18,7 @@ module Bitemporal
               })
             end
             def #{versions}=(versions)
-              #{versions}.assign versions
+              self.#{versions}.assign versions
             end
             def reload
               super
