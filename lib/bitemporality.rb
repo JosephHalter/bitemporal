@@ -1,3 +1,0 @@
-module Bitemporality
-  # Your code goes here...
-end
