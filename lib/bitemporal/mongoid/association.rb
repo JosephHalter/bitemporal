@@ -16,9 +16,11 @@ module Bitemporal
       end
       def assign(versions)
         @master.send "#{@version_ids}=", versions.collect(&:id)
-        @to_a = versions
+        @to_a = versions.dup
       end
-      delegate :<<, :to => :to_a
+      def <<(new_version)
+        to_a.push new_version
+      end
       def at
         @at ||= Bitemporal.now
       end

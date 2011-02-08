@@ -35,9 +35,28 @@ describe Bitemporal::Mongoid::Association do
   end
 
   describe "#assign" do
+    it "updates master version_ids" do
+      versions = [mock(:id => 1)]
+      master.should_receive(:version_ids=).with [1]
+      subject.assign versions
+    end
+    it "fills to_a" do
+      versions = [mock(:id => 1)]
+      subject.assign versions
+      subject.should_not_receive :scope
+      subject.to_a.should =~ versions
+    end
   end
 
   describe "#<<" do
+    it "fills to_a" do
+      versions = [mock(:id => 1)]
+      subject.assign versions
+      subject.should_not_receive :scope
+      new_version = mock(:id => 2)
+      subject << new_version
+      subject.to_a.should =~ [*versions, new_version]
+    end
   end
 
   describe "#at" do
