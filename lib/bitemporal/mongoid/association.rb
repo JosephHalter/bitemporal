@@ -58,8 +58,8 @@ module Bitemporal
       end
       def reload
         @to_a = nil
+        @at = nil
         @valid_from = nil
-        @current = nil
         self
       end
       def current

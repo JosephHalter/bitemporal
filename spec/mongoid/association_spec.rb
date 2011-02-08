@@ -9,14 +9,14 @@ describe Bitemporal::Mongoid::Association do
   after{ Timecop.return }
 
   describe "#scope" do
-    it "returns a scope based on master.versions_ids" do
+    it "returns a scope based on master#versions_ids" do
       master.should_receive(:version_ids).and_return(expected = mock)
       subject.scope.should == BitemporalSpec::Mongoid::Version.where(:_id.in => expected)
     end
   end
 
   describe "#to_a" do
-    it "is an empty array when master.versions_ids is empty" do
+    it "is an empty array when master#versions_ids is empty" do
       BitemporalSpec::Mongoid::Version.create! :valid_from => Time.utc(2010)
       master.should_receive(:version_ids).and_return([])
       subject.to_a.should == []
@@ -35,12 +35,12 @@ describe Bitemporal::Mongoid::Association do
   end
 
   describe "#assign" do
-    it "updates master version_ids" do
+    it "updates master#version_ids" do
       versions = [mock(:id => 1)]
       master.should_receive(:version_ids=).with [1]
       subject.assign versions
     end
-    it "fills to_a" do
+    it "fills #to_a" do
       versions = [mock(:id => 1)]
       subject.assign versions
       subject.should_not_receive :scope
@@ -49,7 +49,7 @@ describe Bitemporal::Mongoid::Association do
   end
 
   describe "#<<" do
-    it "fills to_a" do
+    it "fills #to_a" do
       versions = [mock(:id => 1)]
       subject.assign versions
       subject.should_not_receive :scope
@@ -82,7 +82,7 @@ describe Bitemporal::Mongoid::Association do
 
   describe "#valid_from" do
     before{ Timecop.freeze Time.local(2010, 11, 1) }
-    it "defaults to version_at" do
+    it "defaults to #version_at" do
       subject.at = 1.day.ago
       subject.valid_from.should == 1.day.ago
     end
@@ -95,14 +95,10 @@ describe Bitemporal::Mongoid::Association do
 
   describe "#valid_from=(time)" do
     before{ Timecop.freeze Time.local(2010, 11, 1) }
-    it "defaults to version_at" do
-      subject.at = 1.day.ago
-      subject.valid_from.should == 1.day.ago
-    end
-    it "is memoized" do
+    it "overrides memoization" do
       subject.valid_from
-      subject.at = 1.day.ago
-      subject.valid_from.should == Bitemporal.now
+      subject.valid_from = 1.day.ago
+      subject.valid_from.should == 1.day.ago
     end
   end
 
@@ -110,6 +106,26 @@ describe Bitemporal::Mongoid::Association do
   end
 
   describe "#reload" do
+    it "clears #to_a memoization" do
+      subject.stub_chain(:scope, :to_a).and_return(mock)
+      subject.to_a
+      subject.stub_chain(:scope, :to_a).and_return(expected = mock)
+      subject.reload
+      subject.to_a.should be expected
+    end
+    it "clears #at memoization" do
+      subject.at = 1.day.since
+      subject.reload
+      subject.at.should == Bitemporal.now
+    end
+    it "clears #valid_from memoization" do
+      subject.valid_from
+      subject.reload
+      subject.valid_from.should == Bitemporal.now
+    end
+    it "returns self" do
+      subject.reload.should be subject
+    end
   end
 
   describe "#valid?" do
@@ -118,19 +134,6 @@ describe Bitemporal::Mongoid::Association do
   describe "#save" do
   end
 
-  # it("versions should be empty"){ subject.versions.should =~ [] }
-  # it "versions should be memoized" do
-  #   subject.versions
-  #   subject.update_attribute :version_ids, [@v1.id]
-  #   subject.versions.should =~ []
-  # end
-  # it "versions memoization should be cleared on reload" do
-  #   subject.versions
-  #   subject.update_attribute :version_ids, [@v1.id]
-  #   subject.reload.should be subject
-  #   subject.versions.should =~ [@v1]
-  # end
-  # 
   # describe "version attributes assignment" do
   #   before{ Timecop.freeze Time.local(2010, 11, 1) }
   #   after{ Timecop.return }
